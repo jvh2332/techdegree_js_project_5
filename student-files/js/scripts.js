@@ -6,23 +6,41 @@ project 5 - Public API Requests
 let employees = [];
 const container = document.querySelector('.gallery');
 
-async function getEmployees() {
+loadEmployees();
+
+//If a card is clicked, show modal window with extra info about the employee
+container.addEventListener('click', (e) => {
+    const employeeCard = e.target.closest('.card');
+    if (!employeeCard) return;
+
+    const employeeName = employeeCard.dataset.name;
+    const employee = employees.find(
+        (employee) => `${employee.name.first} ${employee.name.last}` === employeeName
+    );
+    displayModalWindow(employee);
+
+});
+
+//Send API request to get employees information
+async function loadEmployees() {
     try {
       const response = await fetch('https://randomuser.me/api/?results=12&inc=picture,name,email,location,phone,dob');
       if (!response.ok) {
-        throw new Error(`Somthing went wrong`);
+        throw new Error(`Something went wrong`);
       }
   
       const data = await response.json();
       employees = data.results;
+
       displayEmployees(employees);
     } catch (error) {
       console.error(error.message);
     }
   }
 
-function displayEmployees(data) {
-    data.forEach((employee) => {
+//Loop through the response array and append the card html of each employee to the gallery div
+function displayEmployees(employees) {
+    employees.forEach((employee) => {
 
         const employeeHtml= `
         <div class="card" data-name="${employee.name.first} ${employee.name.last}">
@@ -41,20 +59,10 @@ function displayEmployees(data) {
     });
 }
 
-
-container.addEventListener('click', (e) => {
-    const employeeCard = e.target.closest('.card');
-    if (!employeeCard) return;
-    
-
-    const employeeName = employeeCard.dataset.name;
-    const employee = employees.find(
-        (employee) => `${employee.name.first} ${employee.name.last}` === employeeName);
-    displayModalWindow(employee);
-
-});
-
+//Displays the modal window of the details of an employee
 function displayModalWindow(employee){
+    const birthDate = new Date (employee.dob.date);
+    const prettyBirthDate = `${birthDate.getMonth()+1}-${birthDate.getDate()}-${birthDate.getFullYear()}`;
     const modalHtml= `
         <div class="modal-container">
              <div class="modal">
@@ -67,7 +75,7 @@ function displayModalWindow(employee){
                     <hr>
                     <p class="modal-text">${employee.phone}</p>
                     <p class="modal-text">${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state}</p>
-                    <p class="modal-text">Birthday: ${employee.dob.date}</p>
+                    <p class="modal-text">Birthday: ${prettyBirthDate} </p>
                 </div>
             </div>
         </div>
@@ -75,6 +83,9 @@ function displayModalWindow(employee){
 
     document.body.insertAdjacentHTML("beforeend", modalHtml);
 
+    //If the close button is clicked, the modal window should disappear
+    const closeBtn = document.querySelector('.modal-close-btn');
+    closeBtn.addEventListener('click', (e) => {
+        document.querySelector('.modal-container').remove();
+    });
 }
-
-getEmployees();
